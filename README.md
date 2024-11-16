@@ -1,7 +1,7 @@
 
 ## Descripción del Proyecto
 
-Este proyecto implementa un sistema de inicio de sesión seguro utilizando React e integra APIs externas. Demuestra las mejores prácticas para la autenticación y el consumo de APIs en una aplicación React.
+Este proyecto implementa un sistema de inicio de sesión seguro utilizando Angular e integra APIs externas. Demuestra las mejores prácticas para la autenticación y el consumo de APIs en una aplicación Angular.
 
 A continuación, se muestra una captura de pantalla del proyecto en funcionamiento:
 
