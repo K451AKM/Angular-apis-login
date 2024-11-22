@@ -1,10 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-side-menu',
   standalone: true,
-  imports: [LucideAngularModule],
   template: `
     <div class="side-menu" [class.open]="isOpen">
       <button class="close-btn" (click)="closeMenu()">×</button>
@@ -12,19 +10,19 @@ import { LucideAngularModule } from 'lucide-angular';
         <ul>
           <li>
             <button (click)="onShowUsers()" class="menu-item">
-              <i-lucide name="users" class="icon"></i-lucide>
-              USUARIOS
+              <i class="fas fa-users icon"></i>
+              Usuarios
             </button>
           </li>
           <li>
             <button (click)="onShowRickAndMorty()" class="menu-item">
-              <i-lucide name="tv" class="icon"></i-lucide>
+              <i class="fas fa-tv icon"></i>
               Rick and Morty
             </button>
           </li>
           <li>
             <button (click)="onLogout()" class="menu-item">
-              <i-lucide name="log-out" class="icon"></i-lucide>
+              <i class="fas fa-sign-out-alt icon"></i>
               Cerrar Sesión
             </button>
           </li>

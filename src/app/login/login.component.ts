@@ -15,6 +15,7 @@ export class LoginComponent {
   email: string = '';
   password: string = '';
   error: string = '';
+  showPassword: boolean = false;
 
   constructor(private authService: AuthService, private router: Router) {}
 
@@ -32,5 +33,9 @@ export class LoginComponent {
         console.error(err);
       }
     });
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 }
