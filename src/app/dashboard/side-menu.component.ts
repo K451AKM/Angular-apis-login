@@ -1,13 +1,12 @@
-// src/app/dashboard/side-menu.component.ts
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { LucideAngularModule } from 'lucide-angular'; // Importa el módulo completo
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-side-menu',
   standalone: true,
-  imports: [LucideAngularModule], // Importa el módulo completo
+  imports: [LucideAngularModule],
   template: `
-   <div class="side-menu" [class.open]="isOpen">
+    <div class="side-menu" [class.open]="isOpen">
       <button class="close-btn" (click)="closeMenu()">×</button>
       <nav>
         <ul>
@@ -15,6 +14,12 @@ import { LucideAngularModule } from 'lucide-angular'; // Importa el módulo comp
             <button (click)="onShowUsers()" class="menu-item">
               <i-lucide name="users" class="icon"></i-lucide>
               USUARIOS
+            </button>
+          </li>
+          <li>
+            <button (click)="onShowRickAndMorty()" class="menu-item">
+              <i-lucide name="tv" class="icon"></i-lucide>
+              Rick and Morty
             </button>
           </li>
           <li>
@@ -82,6 +87,7 @@ export class SideMenuComponent {
   @Input() isOpen = false;
   @Output() menuToggle = new EventEmitter<void>();
   @Output() showUsers = new EventEmitter<void>();
+  @Output() showRickAndMorty = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
 
   closeMenu() {
@@ -93,8 +99,12 @@ export class SideMenuComponent {
     this.closeMenu();
   }
 
+  onShowRickAndMorty() {
+    this.showRickAndMorty.emit();
+    this.closeMenu();
+  }
+
   onLogout() {
     this.logout.emit();
-    this.closeMenu();
   }
 }

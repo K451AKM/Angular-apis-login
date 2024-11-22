@@ -1,14 +1,14 @@
-// src/app/dashboard/dashboard.component.ts
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NgIf } from '@angular/common';
 import { TablaConsultaComponent } from '../components/tabla-consulta/tabla-consulta.component';
+import { TablaRickAndMortyComponent } from '../components/tabla-rick-and-morty/tabla-rick-and-morty.component';
 import { SideMenuComponent } from './side-menu.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterOutlet, NgIf, TablaConsultaComponent, SideMenuComponent],
+  imports: [RouterOutlet, NgIf, TablaConsultaComponent, TablaRickAndMortyComponent, SideMenuComponent],
   template: `
     <div class="dashboard">
       <header class="header">
@@ -22,10 +22,14 @@ import { SideMenuComponent } from './side-menu.component';
           [isOpen]="isMenuOpen" 
           (menuToggle)="toggleMenu()" 
           (showUsers)="toggleUsersTable()"
+          (showRickAndMorty)="toggleRickAndMortyTable()"
           (logout)="onLogout()">
         </app-side-menu>
         @if (showUsersTable) {
           <app-tabla-consulta></app-tabla-consulta>
+        }
+        @if (showRickAndMortyTable) {
+          <app-tabla-rick-and-morty></app-tabla-rick-and-morty>
         }
         <router-outlet></router-outlet>
       </main>
@@ -70,13 +74,20 @@ import { SideMenuComponent } from './side-menu.component';
 export class DashboardComponent {
   isMenuOpen = false;
   showUsersTable = false;
+  showRickAndMortyTable = false;
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
   }
 
   toggleUsersTable() {
-    this.showUsersTable = !this.showUsersTable;
+    this.showUsersTable = true;
+    this.showRickAndMortyTable = false;
+  }
+
+  toggleRickAndMortyTable() {
+    this.showRickAndMortyTable = true;
+    this.showUsersTable = false;
   }
 
   onLogout() {
