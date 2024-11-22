@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CharacterViewerComponent } from '../character-viewer/character-viewer.component';
+import { CharacterEditorComponent } from '../character-editor/character-editor.component';
 import Swal from 'sweetalert2';
 
 interface Character {
@@ -29,7 +30,7 @@ interface Character {
 @Component({
   selector: 'app-tabla-rick-and-morty',
   standalone: true,
-  imports: [CommonModule, FormsModule, CharacterViewerComponent],
+  imports: [CommonModule, FormsModule, CharacterViewerComponent, CharacterEditorComponent],
   templateUrl: './tabla-rick-and-morty.component.html',
   styleUrls: ['./tabla-rick-and-morty.component.css']
 })
@@ -43,6 +44,7 @@ export class TablaRickAndMortyComponent implements OnInit {
   sortColumn: 'id' | 'name' = 'id';
   sortDirection: 'asc' | 'desc' = 'asc';
   selectedCharacter: Character | null = null;
+  editingCharacter: Character | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -114,6 +116,28 @@ export class TablaRickAndMortyComponent implements OnInit {
 
   closeViewer() {
     this.selectedCharacter = null;
+  }
+
+  editCharacter(character: Character) {
+    this.editingCharacter = character;
+  }
+
+  closeEditor() {
+    this.editingCharacter = null;
+  }
+
+  saveCharacter(updatedCharacter: Character) {
+    const index = this.displayedCharacters.findIndex(char => char.id === updatedCharacter.id);
+    if (index !== -1) {
+      this.displayedCharacters[index] = updatedCharacter;
+      Swal.fire({
+        title: '¡Guardado!',
+        text: `Los cambios en ${updatedCharacter.name} han sido guardados.`,
+        icon: 'success',
+        confirmButtonText: 'OK'
+      });
+      this.closeEditor();
+    }
   }
 
   deleteCharacter(character: Character) {
