@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { RouterOutlet, Router } from '@angular/router';
 import { NgIf } from '@angular/common';
 import { TablaConsultaComponent } from '../components/tabla-consulta/tabla-consulta.component';
 import { TablaRickAndMortyComponent } from '../components/tabla-rick-and-morty/tabla-rick-and-morty.component';
 import { SideMenuComponent } from './side-menu.component';
+import { AuthService } from '../../app/services/auth.service';
+import { User } from '../../app/models/user.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,7 +16,20 @@ import { SideMenuComponent } from './side-menu.component';
       <header class="header">
         <div class="header-content">
           <button class="hamburger-btn" (click)="toggleMenu()">☰</button>
-          <h1 class="title">Dashboard</h1>
+          <div class="user-info">
+            <div class="avatar-container">
+              <ng-container *ngIf="currentUser">
+                <img *ngIf="currentUser.avatar" [src]="currentUser.avatar" alt="User Avatar" class="user-avatar">
+                <div *ngIf="!currentUser.avatar" class="user-avatar-placeholder">
+                  {{ getUserInitial() }}
+                </div>
+              </ng-container>
+              <div *ngIf="!currentUser" class="user-avatar-placeholder">
+                U
+              </div>
+            </div>
+            <h1 class="title">Dashboard</h1>
+          </div>
         </div>
       </header>
       <main class="main-content">
@@ -58,6 +73,30 @@ import { SideMenuComponent } from './side-menu.component';
       cursor: pointer;
       margin-right: 1rem;
     }
+    .user-info {
+      display: flex;
+      align-items: center;
+    }
+    .avatar-container {
+      width: 40px;
+      height: 40px;
+      margin-right: 1rem;
+    }
+    .user-avatar, .user-avatar-placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .user-avatar-placeholder {
+      background-color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #fff;
+      font-size: 1.2rem;
+    }
     .title {
       font-size: 1.5rem;
       color: #333;
@@ -71,10 +110,26 @@ import { SideMenuComponent } from './side-menu.component';
     }
   `]
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   isMenuOpen = false;
   showUsersTable = false;
   showRickAndMortyTable = false;
+  currentUser: User | null = null;
+
+  constructor(private authService: AuthService, private router: Router) {}
+
+  ngOnInit() {
+    this.currentUser = this.authService.getCurrentUser();
+    if (!this.currentUser) {
+      this.router.navigate(['/login']);
+    }
+  }
+
+  getUserInitial(): string {
+    return this.currentUser && this.currentUser.name 
+      ? this.currentUser.name.charAt(0).toUpperCase() 
+      : 'U';
+  }
 
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
@@ -91,9 +146,7 @@ export class DashboardComponent {
   }
 
   onLogout() {
-    // Implementa tu lógica de cierre de sesión aquí
-    console.log('Logout clicked');
-    // Por ejemplo, podrías navegar a la página de login:
-    // this.router.navigate(['/login']);
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }
