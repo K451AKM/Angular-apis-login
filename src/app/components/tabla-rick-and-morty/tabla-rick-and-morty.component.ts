@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CharacterViewerComponent } from '../character-viewer/character-viewer.component';
+import Swal from 'sweetalert2';
 
 interface Character {
   id: number;
@@ -34,6 +35,7 @@ interface Character {
 })
 export class TablaRickAndMortyComponent implements OnInit {
   characters: Character[] = [];
+  displayedCharacters: Character[] = [];
   currentPage = 1;
   totalCharacters = 0;
   hasNextPage = true;
@@ -53,7 +55,9 @@ export class TablaRickAndMortyComponent implements OnInit {
     this.http.get<any>(url).subscribe({
       next: (data) => {
         this.characters = data.results;
-        this.totalCharacters = data.info.count;
+        // Duplicar los resultados
+        this.displayedCharacters = [...this.characters, ...this.characters.map(char => ({...char, id: char.id + 1000}))];
+        this.totalCharacters = this.displayedCharacters.length;
         this.hasNextPage = !!data.info.next;
         this.sortCharacters();
       },
@@ -84,7 +88,7 @@ export class TablaRickAndMortyComponent implements OnInit {
   }
 
   sortCharacters() {
-    this.characters.sort((a, b) => {
+    this.displayedCharacters.sort((a, b) => {
       let aValue: string | number;
       let bValue: string | number;
 
@@ -110,5 +114,28 @@ export class TablaRickAndMortyComponent implements OnInit {
 
   closeViewer() {
     this.selectedCharacter = null;
+  }
+
+  deleteCharacter(character: Character) {
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: `¿Quieres eliminar a ${character.name}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.displayedCharacters = this.displayedCharacters.filter(char => char.id !== character.id);
+        this.totalCharacters = this.displayedCharacters.length;
+        Swal.fire(
+          '¡Eliminado!',
+          `${character.name} ha sido eliminado de la tabla.`,
+          'success'
+        );
+      }
+    });
   }
 }

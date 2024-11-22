@@ -33,7 +33,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (character of characters; track character.id) {
+          @for (character of displayedCharacters; track character.id) {
             <tr>
               <td>{{ character.id }}</td>
               <td>{{ character.name }}</td>
@@ -52,7 +52,7 @@
                     <i class="fas fa-pencil-alt"></i>
                     Editar
                   </button>
-                  <button class="btn btn-delete" title="Eliminar">
+                  <button class="btn btn-delete" title="Eliminar" (click)="deleteCharacter(character)">
                     <i class="fas fa-trash"></i>
                     Eliminar
                   </button>
@@ -66,7 +66,7 @@
   
     <div class="pagination">
       <span class="pagination-info">
-        Mostrando {{ characters.length }} de {{ totalCharacters }} personajes
+        Mostrando {{ displayedCharacters.length }} de {{ totalCharacters }} personajes
       </span>
       <div class="pagination-buttons">
         <button 
