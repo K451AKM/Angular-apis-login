@@ -4,8 +4,8 @@
     <div class="search-container">
       <input 
         type="text" 
-        [(ngModel)]="searchTerm" 
-        (ngModelChange)="onSearch()"
+        [ngModel]="searchTerm" 
+        (ngModelChange)="onSearch($event)"
         placeholder="Buscar por nombre" 
         class="search-input"
       >
@@ -68,7 +68,7 @@
 
   <div class="pagination">
     <span class="pagination-info">
-      Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ getMaxDisplayedIndex() }} de {{ allCharacters.length }} personajes
+      Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ getMaxDisplayedIndex() }} de {{ totalCharacters }} personajes
     </span>
     <div class="pagination-buttons">
       <button 

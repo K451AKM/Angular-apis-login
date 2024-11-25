@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CharacterViewerComponent } from '../character-viewer/character-viewer.component';
 import { CharacterEditorComponent } from '../character-editor/character-editor.component';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import Swal from 'sweetalert2';
 
 interface Character {
@@ -29,6 +30,16 @@ interface Character {
   originalData?: Character;
 }
 
+interface ApiResponse {
+  info: {
+    count: number;
+    pages: number;
+    next: string | null;
+    prev: string | null;
+  };
+  results: Character[];
+}
+
 @Component({
   selector: 'app-tabla-rick-and-morty',
   standalone: true,
@@ -37,65 +48,60 @@ interface Character {
   styleUrls: ['./tabla-rick-and-morty.component.css']
 })
 export class TablaRickAndMortyComponent implements OnInit {
-  allCharacters: Character[] = [];
   displayedCharacters: Character[] = [];
   currentPage = 1;
-  itemsPerPage = 10;
+  itemsPerPage = 20;
   totalCharacters = 0;
+  totalPages = 0;
   hasNextPage = true;
   searchTerm = '';
+  private searchTerms = new Subject<string>();
   sortColumn: 'id' | 'name' = 'id';
   sortDirection: 'asc' | 'desc' = 'asc';
   selectedCharacter: Character | null = null;
   editingCharacter: Character | null = null;
-  totalPages = 0;
   visiblePages: number[] = [];
+  deletedCharacters: Set<number> = new Set();
+  editedCharacters: Map<number, Character> = new Map();
 
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
-    this.loadAllCharacters();
+    this.loadCharacters();
+    this.setupSearch();
   }
 
-  loadAllCharacters() {
-    this.http.get<any>('https://rickandmortyapi.com/api/character').subscribe({
+  setupSearch() {
+    this.searchTerms.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.currentPage = 1;
+      this.loadCharacters();
+    });
+  }
+
+  loadCharacters() {
+    const url = `https://rickandmortyapi.com/api/character/?page=${this.currentPage}&name=${this.searchTerm}`;
+    this.http.get<ApiResponse>(url).subscribe({
       next: (data) => {
+        this.displayedCharacters = data.results.filter(char => !this.deletedCharacters.has(char.id));
+        this.displayedCharacters = this.displayedCharacters.map(char => {
+          if (this.editedCharacters.has(char.id)) {
+            return { ...char, ...this.editedCharacters.get(char.id) };
+          }
+          return char;
+        });
         this.totalCharacters = data.info.count;
         this.totalPages = data.info.pages;
-        this.loadCharactersRecursively(1, []);
+        this.hasNextPage = !!data.info.next;
+        this.updateVisiblePages();
+        this.sortCharacters();
       },
       error: (error) => {
         console.error('Error fetching characters:', error);
       }
     });
-  }
-
-  loadCharactersRecursively(page: number, accumulatedCharacters: Character[]) {
-    const url = `https://rickandmortyapi.com/api/character/?page=${page}`;
-    this.http.get<any>(url).subscribe({
-      next: (data) => {
-        accumulatedCharacters.push(...data.results);
-        if (data.info.next) {
-          this.loadCharactersRecursively(page + 1, accumulatedCharacters);
-        } else {
-          this.allCharacters = accumulatedCharacters;
-          this.updateDisplayedCharacters();
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching characters:', error);
-      }
-    });
-  }
-
-  updateDisplayedCharacters() {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    this.displayedCharacters = this.allCharacters
-      .filter(char => !char.isDeleted && char.name.toLowerCase().includes(this.searchTerm.toLowerCase()))
-      .slice(startIndex, startIndex + this.itemsPerPage);
-    this.hasNextPage = startIndex + this.itemsPerPage < this.allCharacters.length;
-    this.updateVisiblePages();
-    this.sortCharacters();
   }
 
   updateVisiblePages() {
@@ -113,13 +119,13 @@ export class TablaRickAndMortyComponent implements OnInit {
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
       this.currentPage = page;
-      this.updateDisplayedCharacters();
+      this.loadCharacters();
     }
   }
 
-  onSearch() {
-    this.currentPage = 1;
-    this.updateDisplayedCharacters();
+  onSearch(term: string) {
+    this.searchTerm = term;
+    this.searchTerms.next(term);
   }
 
   changePage(delta: number) {
@@ -156,10 +162,7 @@ export class TablaRickAndMortyComponent implements OnInit {
   }
 
   editCharacter(character: Character) {
-    if (!character.originalData) {
-      character.originalData = { ...character };
-    }
-    this.editingCharacter = character;
+    this.editingCharacter = { ...character };
   }
 
   closeEditor() {
@@ -167,18 +170,18 @@ export class TablaRickAndMortyComponent implements OnInit {
   }
 
   saveCharacter(updatedCharacter: Character) {
-    const index = this.allCharacters.findIndex(char => char.id === updatedCharacter.id);
+    this.editedCharacters.set(updatedCharacter.id, updatedCharacter);
+    const index = this.displayedCharacters.findIndex(char => char.id === updatedCharacter.id);
     if (index !== -1) {
-      this.allCharacters[index] = { ...updatedCharacter, originalData: this.allCharacters[index].originalData };
-      this.updateDisplayedCharacters();
-      Swal.fire({
-        title: '¡Guardado!',
-        text: `Los cambios en ${updatedCharacter.name} han sido guardados.`,
-        icon: 'success',
-        confirmButtonText: 'OK'
-      });
-      this.closeEditor();
+      this.displayedCharacters[index] = updatedCharacter;
     }
+    Swal.fire({
+      title: '¡Guardado!',
+      text: `Los cambios en ${updatedCharacter.name} han sido guardados.`,
+      icon: 'success',
+      confirmButtonText: 'OK'
+    });
+    this.closeEditor();
   }
 
   deleteCharacter(character: Character) {
@@ -193,23 +196,21 @@ export class TablaRickAndMortyComponent implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result) => {
       if (result.isConfirmed) {
-        const index = this.allCharacters.findIndex(char => char.id === character.id);
-        if (index !== -1) {
-          this.allCharacters[index].isDeleted = true;
-          this.updateDisplayedCharacters();
-          Swal.fire(
-            '¡Eliminado!',
-            `${character.name} ha sido eliminado de la tabla.`,
-            'success'
-          );
-        }
+        this.deletedCharacters.add(character.id);
+        this.displayedCharacters = this.displayedCharacters.filter(char => char.id !== character.id);
+        Swal.fire(
+          '¡Eliminado!',
+          `${character.name} ha sido eliminado de la tabla.`,
+          'success'
+        );
       }
     });
   }
 
   resetChanges() {
-    this.allCharacters = this.allCharacters.map(char => char.originalData ? { ...char.originalData } : char);
-    this.updateDisplayedCharacters();
+    this.deletedCharacters.clear();
+    this.editedCharacters.clear();
+    this.loadCharacters();
     Swal.fire(
       '¡Cambios reseteados!',
       'Todos los cambios han sido deshechos.',
@@ -218,7 +219,6 @@ export class TablaRickAndMortyComponent implements OnInit {
   }
 
   getMaxDisplayedIndex(): number {
-    return Math.min(this.currentPage * this.itemsPerPage, this.allCharacters.length);
+    return Math.min(this.currentPage * this.itemsPerPage, this.totalCharacters);
   }
 }
-
